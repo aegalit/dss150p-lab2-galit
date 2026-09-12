@@ -23,8 +23,22 @@ def profile_csv(path):
     print(df.dtypes)
 
 def profile_json(path):
-    # TODO: record count, keys, nested fields, date/time fields, numeric fields, nulls
-    pass
+    data = json.loads(path.read_text(encoding='utf-8'))
+    print(f"\nFile: {path.name}")
+    print(f"Record count: {len(data)}")
+
+    first = data[0]
+    print(f"Top-level keys: {list(first.keys())}")
+    print(f"Nested field: shipping -> {list(first['shipping'].keys())}")
+
+    null_counts = {}
+    for record in data:
+        for key in first.keys():
+            value = record.get(key)
+            if value is None:
+                null_counts[key] = null_counts.get(key, 0) + 1
+
+    print(f"Null/missing counts by key: {null_counts}")
 
 def profile_parquet(path):
     # TODO: use pandas.read_parquet; report rows/columns/dtypes/nulls and file size
