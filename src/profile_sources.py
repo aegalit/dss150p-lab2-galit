@@ -41,9 +41,16 @@ def profile_json(path):
     print(f"Null/missing counts by key: {null_counts}")
 
 def profile_parquet(path):
-    # TODO: use pandas.read_parquet; report rows/columns/dtypes/nulls and file size
-    # Requires pyarrow from requirements.txt
-    pass
+    import pandas as pd
+    df = pd.read_parquet(path)
+    print(f"\nFile: {path.name}")
+    print(f"File size: {path.stat().st_size} bytes")
+    print(f"Rows: {len(df)}, Columns: {len(df.columns)}")
+    print(f"Columns: {list(df.columns)}")
+    print("\nData types:")
+    print(df.dtypes)
+    print("\nMissing values per column:")
+    print(df.isnull().sum())
 
 if __name__=='__main__':
     profile_csv(DATA_DIR/'customers.csv')
