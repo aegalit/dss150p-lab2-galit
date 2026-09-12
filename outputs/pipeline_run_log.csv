@@ -1,2 +1,6 @@
 run_id,started_at,finished_at,status,source,records_read,records_written,duplicates_removed,watermark_before,watermark_after,error_message
 6278568d-a211-49f4-9f1f-d053992a148d,2026-09-12T05:21:59.657335+00:00,2026-09-12T05:21:59.681485+00:00,SUCCESS,files+api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
+7057bf2c-6046-4977-956f-befd88399728,2026-09-12T05:23:14.775331+00:00,2026-09-12T05:23:14.800084+00:00,SUCCESS,files+api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
+a3b853c5-348d-4e5d-b82e-bdeee906e25e,2026-09-12T05:23:57.589890+00:00,2026-09-12T05:23:57.730176+00:00,SUCCESS,files+api,122,120,2,,2026-08-21T10:00:00,
+c5ae6571-e029-4f72-9d58-bc5ab1c9c38a,2026-09-12T05:25:57.191982+00:00,2026-09-12T05:25:59.248391+00:00,FAILED,files+api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,"HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/events?page=1&per_page=20&updated_after=2026-08-21T10%3A00%3A00 (Caused by NewConnectionError(""HTTPConnection(host='127.0.0.1', port=8000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it""))"
+891db69b-0ee2-4b07-9453-bf9fd05c8710,2026-09-12T05:27:20.844435+00:00,2026-09-12T05:27:20.877067+00:00,SUCCESS,files+api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
