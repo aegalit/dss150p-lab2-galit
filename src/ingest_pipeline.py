@@ -67,14 +67,59 @@ def fetch_api_page(page, per_page=20, updated_after=None):
     r=requests.get(API_URL,params=params,timeout=30); r.raise_for_status(); return r.json()
 
 def ingest_api():
-    # TODO:
-    # 1) read watermark
-    # 2) follow pagination until has_more=False
-    # 3) append ingestion metadata (_ingested_at, _source)
-    # 4) deduplicate by event_id keeping greatest updated_at
-    # 5) write raw/api/events.jsonl atomically
-    # 6) update watermark only after successful write
-    pass
+    watermark = load_watermark()
+    print(f"Starting watermark: {watermark}")
+
+    all_records = []
+    page = 1
+    while True:
+        response = fetch_api_page(page, per_page=20, updated_after=watermark)
+        items = response['items']
+        all_records.extend(items)
+        print(f"Fetched page {page}: {len(items)} records (has_more={response['has_more']})")
+        if not response['has_more']:
+            break
+        page += 1
+
+    print(f"Total records read: {len(all_records)}")
+
+    for record in all_records:
+        record['_ingested_at'] = utc_now()
+        record['_source'] = 'local_api'
+
+    deduped = {}
+    for record in all_records:
+        event_id = record['event_id']
+        if event_id not in deduped or record['updated_at'] > deduped[event_id]['updated_at']:
+            deduped[event_id] = record
+
+    final_records = list(deduped.values())
+    duplicates_removed = len(all_records) - len(final_records)
+    print(f"Records after dedup: {len(final_records)} (duplicates removed: {duplicates_removed})")
+
+    if not final_records:
+        print("No new records to write. Watermark unchanged.")
+        return
+
+    RAW_API = RAW / 'api'
+    RAW_API.mkdir(parents=True, exist_ok=True)
+    final_path = RAW_API / 'events.jsonl'
+    temp_path = RAW_API / 'events.jsonl.tmp'
+
+    existing_lines = []
+    if final_path.exists():
+        existing_lines = final_path.read_text(encoding='utf-8').splitlines()
+
+    new_lines = [json.dumps(record) for record in final_records]
+    all_lines = existing_lines + new_lines
+
+    temp_path.write_text('\n'.join(all_lines) + '\n', encoding='utf-8')
+    temp_path.replace(final_path)
+    print(f"Wrote {len(new_lines)} new records to {final_path}")
+
+    new_watermark = max(record['updated_at'] for record in final_records)
+    save_watermark(new_watermark)
+    print(f"Watermark advanced to: {new_watermark}")
 
 if __name__=='__main__':
     RAW.mkdir(exist_ok=True); STATE.mkdir(exist_ok=True)
