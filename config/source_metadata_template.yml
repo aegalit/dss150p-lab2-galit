@@ -1,12 +1,158 @@
-source_name: "TODO"
-source_type: "TODO"
-location_or_endpoint: "TODO"
-owner: "TODO"
-description: "TODO"
-record_count: "TODO"
-schema: []
-primary_or_candidate_key: "TODO"
+source_name: "customers.csv"
+source_type: "csv"
+location_or_endpoint: "data/customers.csv"
+owner: "TODO - Your Name / Instructor"
+description: "Customer master data including contact info, city, signup date, and segment"
+record_count: 250
+schema:
+  - name: customer_id
+    type: string
+  - name: first_name
+    type: string
+  - name: last_name
+    type: string
+  - name: email
+    type: string
+  - name: city
+    type: string
+  - name: signup_date
+    type: string (date-like)
+  - name: customer_segment
+    type: string
+primary_or_candidate_key: "customer_id (not unique - 3 duplicates found)"
+update_pattern: "TODO - e.g. daily batch export, unknown"
+known_quality_issues:
+  - "3 missing email values"
+  - "2 missing city values"
+  - "2 exact duplicate rows"
+  - "3 duplicate customer_id values (violates uniqueness)"
+acquisition_method: "File copy"
+validation_checks:
+  - "customer_id must be unique"
+  - "email must not be null"
+  - "signup_date must be a valid, parseable date"
+  ---
+source_name: "orders.json"
+source_type: "json"
+location_or_endpoint: "data/orders.json"
+owner: "TODO - Your Name / Instructor"
+description: "Order records including totals, status, and nested shipping details"
+record_count: 250
+schema:
+  - name: order_id
+    type: string
+  - name: customer_id
+    type: string
+  - name: order_timestamp
+    type: string (timestamp-like)
+  - name: status
+    type: string
+  - name: item_count
+    type: integer
+  - name: subtotal
+    type: float
+  - name: shipping_fee
+    type: float
+  - name: total_amount
+    type: float
+  - name: shipping
+    type: nested object (region, method)
+primary_or_candidate_key: "order_id"
 update_pattern: "TODO"
-known_quality_issues: []
-acquisition_method: "TODO"
-validation_checks: []
+known_quality_issues:
+  - "No explicit null values found, but presence of keys was not individually verified per record"
+acquisition_method: "File copy"
+validation_checks:
+  - "order_id must be unique"
+  - "total_amount should equal subtotal + shipping_fee"
+  - "order_timestamp must be a valid timestamp"
+
+---
+source_name: "products.parquet"
+source_type: "parquet"
+location_or_endpoint: "data/products.parquet"
+owner: "TODO - Your Name / Instructor"
+description: "Product catalog with pricing, stock, and category information"
+record_count: 200
+schema:
+  - name: product_id
+    type: string
+  - name: product_name
+    type: string
+  - name: category
+    type: string
+  - name: brand
+    type: string
+  - name: unit_price
+    type: float64
+  - name: stock_quantity
+    type: int32
+  - name: weight_kg
+    type: float64
+primary_or_candidate_key: "product_id"
+update_pattern: "TODO"
+known_quality_issues:
+  - "No missing values found"
+acquisition_method: "File copy"
+validation_checks:
+  - "product_id must be unique"
+  - "unit_price must be non-negative"
+  - "stock_quantity must be non-negative"
+
+---
+source_name: "Local REST API - events"
+source_type: "REST API"
+location_or_endpoint: "http://127.0.0.1:8000/api/events"
+owner: "TODO - Your Name / Instructor"
+description: "Paginated event stream with customer activity (page views, checkouts, payments)"
+record_count: 122
+schema:
+  - name: event_id
+    type: string
+  - name: customer_id
+    type: string
+  - name: event_type
+    type: string
+  - name: amount
+    type: float
+  - name: updated_at
+    type: string (timestamp-like)
+  - name: metadata
+    type: nested object (channel, campaign)
+primary_or_candidate_key: "event_id (contains intentional duplicates by design)"
+update_pattern: "Incremental via updated_after parameter"
+known_quality_issues:
+  - "Two event_id values intentionally repeated with newer timestamps, by lab design"
+acquisition_method: "Paginated GET request"
+validation_checks:
+  - "event_id must be unique after deduplication"
+  - "updated_at must be a valid timestamp"
+  - "amount must be non-negative"
+
+---
+source_name: "support_tickets"
+source_type: "PostgreSQL table"
+location_or_endpoint: "postgresql://dss150p-lab2-postgres/dss150p/support_tickets"
+owner: "TODO - Your Name / Instructor"
+description: "Customer support ticket records with category, priority, and resolution status"
+record_count: 250
+schema:
+  - name: ticket_id
+    type: integer
+  - name: customer_id
+    type: varchar(10)
+  - name: category
+    type: varchar(40)
+  - name: priority
+    type: varchar(10)
+  - name: assigned_agent
+    type: varchar(80), nullable
+primary_or_candidate_key: "ticket_id"
+update_pattern: "TODO"
+known_quality_issues:
+  - "4 tickets have no assigned_agent"
+acquisition_method: "Bounded SQL query (inspection only in this lab)"
+validation_checks:
+  - "ticket_id must be unique"
+  - "category must be one of a known set of values"
+  - "resolved_at should not be earlier than opened_at"

@@ -1,18 +1,61 @@
 dataset: customers
-owner: "TODO"
+description: "Customer master data including contact info, city, signup date, and segment"
+owner: "TODO - Your Name / Instructor"
+producer: "TODO - e.g. CRM system / Sales team"
+consumer: "TODO - e.g. Analytics team, Marketing team"
 source_type: csv
 primary_key: customer_id
+primary_key_notes: "Intended to be unique, but source currently contains 3 duplicate values - flagged as a known issue, not corrected at ingestion."
+
 delivery:
-  cadence: "TODO"
+  cadence: "TODO - e.g. daily batch export"
+  availability: "File-based, delivered to a known location"
+
 fields:
   - name: customer_id
     type: string
     nullable: false
     unique: true
+  - name: first_name
+    type: string
+    nullable: false
+    unique: false
+  - name: last_name
+    type: string
+    nullable: false
+    unique: false
   - name: email
     type: string
     nullable: true
+    unique: false
+  - name: city
+    type: string
+    nullable: true
+    unique: false
+  - name: signup_date
+    type: date
+    nullable: false
+    unique: false
+  - name: customer_segment
+    type: string
+    nullable: false
+    unique: false
+
 quality_rules:
-  - "TODO: define at least 5 rules"
+  - "customer_id must be unique across all records"
+  - "email must not be null or empty"
+  - "signup_date must be a valid, parseable calendar date"
+  - "customer_segment must be one of a known, agreed set of values"
+  - "no exact duplicate rows should be present in the delivered file"
+
 change_policy:
-  schema_change_notice: "TODO"
+  schema_change_notice: "TODO - e.g. producer must notify consumer at least 5 business days before any column is added, removed, or renamed"
+  breaking_change_definition: "Any removal or renaming of an existing field, or a change in a field's data type"
+
+contact_escalation:
+  primary_contact: "TODO"
+  escalation_path: "TODO"
+
+ingestion_approach:
+  method: "Full load"
+  justification: "Source is a relatively small, complete file snapshot (250 rows) rather than a changelog or incremental feed; no reliable watermark field (like an updated_at) exists in this source to support incremental extraction."
