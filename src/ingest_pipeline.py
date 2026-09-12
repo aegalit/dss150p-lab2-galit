@@ -99,7 +99,7 @@ def ingest_api():
 
     if not final_records:
         print("No new records to write. Watermark unchanged.")
-        return
+        return {'records_read': len(all_records), 'records_written': 0, 'duplicates_removed': duplicates_removed, 'watermark_before': watermark, 'watermark_after': watermark}
 
     RAW_API = RAW / 'api'
     RAW_API.mkdir(parents=True, exist_ok=True)
@@ -120,7 +120,60 @@ def ingest_api():
     new_watermark = max(record['updated_at'] for record in final_records)
     save_watermark(new_watermark)
     print(f"Watermark advanced to: {new_watermark}")
+    return {'records_read': len(all_records), 'records_written': len(new_lines), 'duplicates_removed': duplicates_removed, 'watermark_before': watermark, 'watermark_after': new_watermark}
+
+import csv as csv_module
+import uuid
+
+def append_run_log(run_id, started_at, finished_at, status, source, records_read, records_written, duplicates_removed, watermark_before, watermark_after, error_message=''):
+    log_path = ROOT / 'templates' / 'pipeline_run_log_template.csv'
+    output_path = ROOT / 'outputs' / 'pipeline_run_log.csv'
+    output_path.parent.mkdir(exist_ok=True)
+
+    file_exists = output_path.exists()
+    with output_path.open('a', newline='', encoding='utf-8') as f:
+        writer = csv_module.writer(f)
+        if not file_exists:
+            writer.writerow(['run_id','started_at','finished_at','status','source','records_read','records_written','duplicates_removed','watermark_before','watermark_after','error_message'])
+        writer.writerow([run_id, started_at, finished_at, status, source, records_read, records_written, duplicates_removed, watermark_before, watermark_after, error_message])
 
 if __name__=='__main__':
     RAW.mkdir(exist_ok=True); STATE.mkdir(exist_ok=True)
-    ingest_files(); ingest_api()
+
+    run_id = str(uuid.uuid4())
+    started_at = utc_now()
+
+    try:
+        ingest_files()
+        api_result = ingest_api()
+        finished_at = utc_now()
+        append_run_log(
+            run_id=run_id,
+            started_at=started_at,
+            finished_at=finished_at,
+            status='SUCCESS',
+            source='files+api',
+            records_read=api_result['records_read'],
+            records_written=api_result['records_written'],
+            duplicates_removed=api_result['duplicates_removed'],
+            watermark_before=api_result['watermark_before'],
+            watermark_after=api_result['watermark_after'],
+        )
+        print(f"\nRun {run_id} completed successfully. Logged to outputs/pipeline_run_log.csv")
+    except Exception as e:
+        finished_at = utc_now()
+        append_run_log(
+            run_id=run_id,
+            started_at=started_at,
+            finished_at=finished_at,
+            status='FAILED',
+            source='files+api',
+            records_read=0,
+            records_written=0,
+            duplicates_removed=0,
+            watermark_before=load_watermark(),
+            watermark_after=load_watermark(),
+            error_message=str(e),
+        )
+        print(f"\nRun {run_id} FAILED: {e}")
+        raise

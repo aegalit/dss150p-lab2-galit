@@ -1,0 +1,2 @@
+run_id,started_at,finished_at,status,source,records_read,records_written,duplicates_removed,watermark_before,watermark_after,error_message
+6278568d-a211-49f4-9f1f-d053992a148d,2026-09-12T05:21:59.657335+00:00,2026-09-12T05:21:59.681485+00:00,SUCCESS,files+api,0,0,0,2026-08-21T10:00:00,2026-08-21T10:00:00,
